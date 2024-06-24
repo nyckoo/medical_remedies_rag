@@ -1,0 +1,11 @@
+langchain
+langchain-community
+llama-parse
+sentence-transformers
+qdrant-client
+python-dotenv
+langchain-groq
+pymupdf
+unstructured
+markdown
+InstructorEmbedding
