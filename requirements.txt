@@ -9,3 +9,4 @@ pymupdf
 unstructured
 markdown
 InstructorEmbedding
+Flask

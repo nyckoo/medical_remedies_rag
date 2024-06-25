@@ -1,30 +1,30 @@
 import os
 import re
-
 from llama_parse import LlamaParse
 from pymupdf import Document, Rect
 
 
-def transform_text_to_markdown(text):
+def name_divider_util(name: str, part: int):
+    split_name = name.split("_", 3)
+    return f"{'_'.join(split_name[:3])}.{part}_{split_name[3]}"
+
+
+def transform_text_to_markdown(text: str):
     # Define the expressions to be marked with double hash (excluding "Research" and "Description")
     double_hash_terms = [
         "Habitat & Cultivation", "Parts Used", "Constituents", "History & Folklore", "Research", "Part Used",
         "Medicinal Actions & Uses", "Cautions", "Caution", "Related Species", "Self-help Use",
-        "RCautions", "RCaution", "QCaution", "QCautions", "RQCaution", "RQCautions",
+        "RCautions", "RCaution", "QCaution", "QCautions", "RQCaution", "RQCautions",  # <- read caution alternations
     ]
-
     # Create regex pattern for the double hash terms
     double_hash_pattern = r'\b(?:' + '|'.join(re.escape(term) for term in double_hash_terms) + r')\b'
-
     # Add single hash before plant names (text between start and 'Description')
     # (?<=\n)(.*?)(?= Description)
     d_str = "Description"
     d_pattern = r'\n*([^.]*)\bDescription\b'
     s = re.sub(d_pattern, lambda m: '\n# ' + m.group().replace('\n', ' ').replace(d_str, "\n## " + d_str + "\n"), text)
-
     # Add double hash before each term in the double hash list (excluding "Description")
     s = re.sub(double_hash_pattern, r'## \g<0>\n', s)
-
     return s
 
 
@@ -66,12 +66,15 @@ def load_document_by_pymupdf(pdf_source_path: str, output_file_path: str) -> str
     return doc
 
 
-def load_part4_data(merge_docs=False):
-    omp_pages = (1, 11, 22, 37, 52, 67, 88, 100, 127)
+def load_multiple_doc_pages_data(names: list[str], merge_docs=False):
     docs = []
-    for idx in range(len(omp_pages) - 1):
-        last_part = f"_p{omp_pages[idx]}-{omp_pages[idx + 1] - 1}" + omp
-        file_name = part_4_core + last_part
+    merged_doc_name = "_".join(names[0][:3]) + '_' + names[0][4]
+    for name in names:
+        split_name = name.split("_", 4)
+        pages = split_name[3][1:].split("-")
+        del split_name[3]
+        pages_part = f"_p{pages[0]}-{pages[1]}_"
+        file_name = "_".join(split_name[:3]) + pages_part + split_name[3]
         if os.path.exists(f"./data_store/{file_name}.md"):
             with open(f"./data_store/{file_name}.md", 'r', encoding="utf-8") as f:
                 doc = f.read()
@@ -82,13 +85,13 @@ def load_part4_data(merge_docs=False):
                 f.write(output)
         docs.append(doc)
     if merge_docs:
-        with open(f"./data_store/{part_4_core+omp}.md", 'w', encoding="utf-8") as f:
+        with open(f"./data_store/{merged_doc_name}.md", 'w', encoding="utf-8") as f:
             for doc in docs:
                 f.write(doc+"\n")
     return docs
 
 
-def load_ordinary_data(part_name: str, parsing_instr=""):
+def load_single_doc_data(part_name: str, parsing_instr=""):
     if os.path.exists(f"./data_store/{part_name}.md"):
         with open(f"./data_store/{part_name}.md", 'r', encoding="utf-8") as f:
             doc = f.read()
@@ -100,7 +103,7 @@ def load_ordinary_data(part_name: str, parsing_instr=""):
     return doc
 
 
-parsing_instructions = {
+parsing_instructions = {  # llama_parse instruction for different chapters & text structures
     "general_info": """
         The document is a collection of natural medicines knowledge.
          I want it to be parsed into markdown format by following rules:

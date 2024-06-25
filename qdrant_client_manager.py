@@ -12,13 +12,16 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import ResponseHandlingException
 
 
-class QdrantManager:
+class QdrantClientManager:
     def __init__(self, collection_name: str):
         self.collection_name = collection_name
-        self.qdrant_client = QdrantClient(url="http://localhost:6333")
-        self.model = INSTRUCTOR('hkunlp/instructor-large')
+        self.qdrant_client = QdrantClient(
+            url=os.getenv("QDRANT_DB_URL"),
+            api_key=os.getenv("QDRANT_KEY")
+        )
+        self.model = INSTRUCTOR(os.getenv("INSTRUCTOR_LOCAL_PATH"))  # os.getenv("INSTRUCTOR_LOCAL_PATH")
 
-    def create_vector_database(self):
+    def create_vector_collection(self):
         if not self.qdrant_client.collection_exists(self.collection_name):
             self.qdrant_client.create_collection(
                 collection_name=self.collection_name,
@@ -26,11 +29,10 @@ class QdrantManager:
                     size=768,
                     distance=models.Distance.COSINE,
                     datatype=models.Datatype.FLOAT32,  # UINT8 made vectors filled with zeros
-                    on_disk=True
                 )
             )
 
-    def populate_vector_database(self, doc_name: str, doc_specifier: str):
+    def populate_vector_collection(self, doc_name: str, doc_specifier: str):
         loader = TextLoader(f'./data_store/{doc_name}.md', encoding="utf-8")
         documents = loader.load()
 
@@ -70,13 +72,12 @@ class QdrantManager:
     def make_query(self, query: str):
         query_instruction = "Represent the question for retrieving supporting documents: "
         np_vector = self.model.encode(f'{query_instruction} """ {query} """')
-            #f'{query_instruction} """ {query} """')
-        #vector = [float(vector) for vector in np_vectors]
         results = self.qdrant_client.search(
             collection_name=self.collection_name,
             query_vector=np_vector,
             search_params=models.SearchParams(hnsw_ef=128, exact=True),
-            limit=5
+            score_threshold=0.8,
+            limit=10
         )
         return [answer.payload for answer in results]
 
