@@ -12,7 +12,7 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import ResponseHandlingException
 
 
-class QdrantClientManager:
+class QdrantManager:
     def __init__(self, collection_name: str):
         self.collection_name = collection_name
         self.qdrant_client = QdrantClient(
@@ -28,7 +28,7 @@ class QdrantClientManager:
                 vectors_config=models.VectorParams(
                     size=768,
                     distance=models.Distance.COSINE,
-                    datatype=models.Datatype.FLOAT32,  # UINT8 made vectors filled with zeros
+                    datatype=models.Datatype.FLOAT32,  # UINT8 made vectors filled with zeros (too little precision)
                 )
             )
 
@@ -79,7 +79,7 @@ class QdrantClientManager:
             score_threshold=0.8,
             limit=10
         )
-        return [answer.payload for answer in results]
+        return "[" + "], [".join(map(str, [answer.payload for answer in results])) + "]"
 
     def get_records_by_ids(self, recs_ids: list[str]):
         return self.qdrant_client.retrieve(self.collection_name, recs_ids, with_vectors=True)

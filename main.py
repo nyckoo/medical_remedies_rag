@@ -1,6 +1,5 @@
-from dotenv import load_dotenv
 from datetime import datetime
-from qdrant_client_manager import QdrantClientManager
+from qdrant_manager import QdrantManager
 from pdf_parser_utils import name_divider_util
 
 book_name = "Encyclopedia of Herbal Medicine_part"
@@ -24,9 +23,8 @@ book_util_dict = {
 }
 
 if __name__ == "__main__":
-    load_dotenv()
     start_model = datetime.now()
-    qdrant_cm = QdrantClientManager("medical_herbs_rag_instructor_embeddings")
+    qdrant_cm = QdrantManager("medical_herbs_rag_instructor_embeddings")
     end_model = datetime.now()
     print("model_init:", (end_model - start_model).microseconds)
 
