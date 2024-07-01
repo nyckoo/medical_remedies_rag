@@ -1,5 +1,8 @@
 import os
 import re
+
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import MarkdownHeaderTextSplitter
 from llama_parse import LlamaParse
 from pymupdf import Document, Rect
 
@@ -26,6 +29,35 @@ def transform_text_to_markdown(text: str):
     # Add double hash before each term in the double hash list (excluding "Description")
     s = re.sub(double_hash_pattern, r'## \g<0>\n', s)
     return s
+
+
+def merge_categories(categories_groups: dict[str, set], input_file: str):
+    loader = TextLoader(f'./data_store/{input_file}.md', encoding="utf-8")
+    documents = loader.load()
+    md_splitter = MarkdownHeaderTextSplitter(
+        headers_to_split_on=[
+            ("#", "subject"),
+            ("##", "section"),
+            ("###", "paragraph"),
+        ],
+        strip_headers=True
+    )
+    doc_chunks = [md_splitter.split_text(doc.page_content) for doc in documents]
+    docs_chunks = [single_chunk for chunks in doc_chunks for single_chunk in chunks]
+    first_group_name = list(categories_groups.keys())[0]
+    name_store = ""
+    new_doc_contents = {}
+    for doc in docs_chunks:
+        current_name = doc.metadata.get("subject")
+        if name_store == current_name:
+            metadata = doc.metadata.get("section", doc.metadata.get("paragraph", ""))
+            for group_name, old_categories in categories_groups.items():
+                if metadata in old_categories:
+                    new_doc_contents[group_name] += doc.page_content + "\n"
+        else:
+            name_store = current_name
+            new_doc_contents.update({group_name: "" for group_name in categories_groups.keys()})
+            new_doc_contents[first_group_name] += doc.page_content + "\n"
 
 
 def load_document_by_llama_parse(pdf_source_path: str, output_file_path: str, parsing_instruction: str, use_gpt4o: bool) -> str:

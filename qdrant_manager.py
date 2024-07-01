@@ -35,14 +35,12 @@ class QdrantManager:
     def populate_vector_collection(self, doc_name: str, doc_specifier: str):
         loader = TextLoader(f'./data_store/{doc_name}.md', encoding="utf-8")
         documents = loader.load()
-
-        markdown_headers = [
-            ("#", "subject"),
-            ("##", "section"),
-            ("###", "paragraph"),
-        ]
         md_splitter = MarkdownHeaderTextSplitter(
-            headers_to_split_on=markdown_headers,
+            headers_to_split_on=[
+                ("#", "subject"),
+                ("##", "section"),
+                ("###", "paragraph"),
+            ],
             strip_headers=True
         )
         doc_chunks = [md_splitter.split_text(doc.page_content) for doc in documents]
@@ -55,7 +53,7 @@ class QdrantManager:
                     id=uuid.uuid4().hex,
                     payload={
                         "spec": f'{chunk.metadata.get("subject")} - '
-                                f'{chunk.metadata.get("section", chunk.metadata.get("paragraph"))}',
+                                f'{chunk.metadata.get("section", chunk.metadata.get("paragraph", ""))}',
                         "content": chunk.page_content,
                         "tags": chunk.metadata
                     },
