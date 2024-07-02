@@ -2,11 +2,6 @@ import os
 import uuid
 import logging
 
-from langchain.text_splitter import MarkdownHeaderTextSplitter
-from langchain_community.document_loaders import TextLoader
-from langchain.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
-from sentence_transformers import SentenceTransformer  # "sentence-transformers/multi-qa-mpnet-base-cos-v1"
 from InstructorEmbedding import INSTRUCTOR
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import ResponseHandlingException
@@ -32,19 +27,7 @@ class QdrantManager:
                 )
             )
 
-    def populate_vector_collection(self, doc_name: str, doc_specifier: str):
-        loader = TextLoader(f'./data_store/{doc_name}.md', encoding="utf-8")
-        documents = loader.load()
-        md_splitter = MarkdownHeaderTextSplitter(
-            headers_to_split_on=[
-                ("#", "subject"),
-                ("##", "section"),
-                ("###", "paragraph"),
-            ],
-            strip_headers=True
-        )
-        doc_chunks = [md_splitter.split_text(doc.page_content) for doc in documents]
-        docs_chunks = [single_chunk for chunks in doc_chunks for single_chunk in chunks]
+    def populate_vector_collection(self, doc_name: str, doc_specifier: str, docs_chunks: list):
         doc_instruction = f"Represent the {doc_specifier} Natural remedies paragraph for retrieval: "
         try:
             self.qdrant_client.upsert(
@@ -52,8 +35,7 @@ class QdrantManager:
                 points=[models.PointStruct(
                     id=uuid.uuid4().hex,
                     payload={
-                        "spec": f'{chunk.metadata.get("subject")} - '
-                                f'{chunk.metadata.get("section", chunk.metadata.get("paragraph", ""))}',
+                        "ebook_chapter": doc_name,
                         "content": chunk.page_content,
                         "tags": chunk.metadata
                     },
@@ -64,8 +46,6 @@ class QdrantManager:
             )
         except ResponseHandlingException as e:
             logging.exception(e.source)
-        finally:
-            logging.info(f"End of '{doc_name}' processing.")
 
     def make_query(self, query: str):
         query_instruction = "Represent the question for retrieving supporting documents: "
