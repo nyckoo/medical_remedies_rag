@@ -12,16 +12,28 @@ cultivation_and_usage = book_name + "_5_cultivation_and_usage"
 
 
 book_util_dict = {
-    # history: "General history of",
-    # cultures: "Cultural customs of",
-    # name_divider_util(key_medicinal_plants, 1): "Properties of",
-    # name_divider_util(key_medicinal_plants, 2): "Properties of",
-    name_divider_util(other_medicinal_plants, 1): "Features of",
-    name_divider_util(other_medicinal_plants, 2): "Features of",
-    name_divider_util(other_medicinal_plants, 3): "Features of",
-    name_divider_util(other_medicinal_plants, 4): "Features of",
-    # cultivation_and_usage: "Use of",
+    history: ("General history of", "DEFAULT_EXTRACTION"),
+    cultures: ("Cultural customs of", "DEFAULT_EXTRACTION"),
+    name_divider_util(key_medicinal_plants, 1): ("Properties of", "CATEGORIES_EXTRACTION"),
+    name_divider_util(key_medicinal_plants, 2): ("Properties of", "CATEGORIES_EXTRACTION"),
+    name_divider_util(other_medicinal_plants, 1): ("Features of", "CATEGORIES_EXTRACTION"),
+    name_divider_util(other_medicinal_plants, 2): ("Features of", "CATEGORIES_EXTRACTION"),
+    name_divider_util(other_medicinal_plants, 3): ("Features of", "CATEGORIES_EXTRACTION"),
+    name_divider_util(other_medicinal_plants, 4): ("Features of", "CATEGORIES_EXTRACTION"),
+    cultivation_and_usage: ("Use of", "DEFAULT_EXTRACTION"),
 }
+
+groups_mapper = {
+        key_medicinal_plants: {
+            "Medicine characteristics": {"Habitat & Cultivation", "Research", "Related Species", "Parts Used"},
+            "Use": {"Key Constituents", "Key actions", "Traditional & Current Uses", "Key Preparations & Their Uses"}
+        },
+        other_medicinal_plants: {
+            "Medicine characteristics": {"Habitat & Cultivation", "Description", "Related Species", "Habitat & Cultivation",
+                                         "Parts Used", "Part Used", "Research"},
+            "Use": {"Constituents", "Medicinal Actions & Uses", "Caution", "Cautions", "Self-help Use", "Self-help Uses"}
+        }
+    }
 
 if __name__ == "__main__":
     groupings = {

@@ -14,7 +14,7 @@ class QdrantManager:
             url=os.getenv("QDRANT_DB_URL"),
             api_key=os.getenv("QDRANT_KEY")
         )
-        self.model = INSTRUCTOR(os.getenv("INSTRUCTOR_LOCAL_PATH"))  # os.getenv("INSTRUCTOR_LOCAL_PATH")
+        self.model = INSTRUCTOR(os.getenv("INSTRUCTOR_LOCAL_PATH"))
 
     def create_vector_collection(self):
         if not self.qdrant_client.collection_exists(self.collection_name):
@@ -29,7 +29,7 @@ class QdrantManager:
 
     def populate_vector_collection(self, doc_name: str, doc_specifier: str, docs_chunks: list):
         doc_instruction = f"Represent the {doc_specifier} Natural remedies paragraph for retrieval: "
-        try:
+        try:  # upsert has a limit of processing files with +5000 lines & may return an error
             self.qdrant_client.upsert(
                 collection_name=self.collection_name,
                 points=[models.PointStruct(
