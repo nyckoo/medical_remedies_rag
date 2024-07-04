@@ -11,7 +11,6 @@ def name_divider_util(name: str, part: int):
 
 
 def transform_text_to_markdown(text: str):
-    # Define the expressions to be marked with double hash (excluding "Research" and "Description")
     double_hash_terms = [
         "Habitat & Cultivation", "Parts Used", "Constituents", "History & Folklore", "Research", "Part Used",
         "Medicinal Actions & Uses", "Cautions", "Caution", "Related Species", "Self-help Use",
@@ -27,24 +26,6 @@ def transform_text_to_markdown(text: str):
     # Add double hash before each term in the double hash list (excluding "Description")
     s = re.sub(double_hash_pattern, r'## \g<0>\n', s)
     return s
-
-
-def load_document_by_llama_parse(pdf_source_path: str, output_file_path: str, parsing_instruction: str, use_gpt4o: bool) -> str:
-    if os.path.exists(output_file_path):
-        with open(output_file_path, 'r', encoding="utf-8") as f:
-            doc = f.read()
-    else:
-        parser = LlamaParse(
-            api_key=os.environ["LLAMA_CLOUD_KEY"],
-            result_type="markdown",
-            parsing_instruction=parsing_instruction,
-            gpt4o_mode=use_gpt4o,
-            max_timeout=5000,
-            ignore_errors=False
-            )
-        llama_parse_doc = parser.load_data(pdf_source_path)[0]
-        doc = llama_parse_doc.get_content()
-    return doc
 
 
 def load_document_by_pymupdf(pdf_source_path: str, output_file_path: str) -> str:
@@ -67,7 +48,7 @@ def load_document_by_pymupdf(pdf_source_path: str, output_file_path: str) -> str
     return doc
 
 
-def load_multiple_doc_pages_data(names: list[str], merge_docs=False):
+def load_multiple_docs_with_pymupdf(names: list[str], merge_docs=False):
     docs = []
     merged_doc_name = "_".join(names[0][:3]) + '_' + names[0][4]
     for name in names:
@@ -92,7 +73,25 @@ def load_multiple_doc_pages_data(names: list[str], merge_docs=False):
     return docs
 
 
-def load_single_doc_data(part_name: str, parsing_instr=""):
+def load_document_by_llama_parse(pdf_source_path: str, output_file_path: str, parsing_instruction: str, use_gpt4o: bool) -> str:
+    if os.path.exists(output_file_path):
+        with open(output_file_path, 'r', encoding="utf-8") as f:
+            doc = f.read()
+    else:
+        parser = LlamaParse(
+            api_key=os.environ["LLAMA_CLOUD_KEY"],
+            result_type="markdown",
+            parsing_instruction=parsing_instruction,
+            gpt4o_mode=use_gpt4o,
+            max_timeout=5000,
+            ignore_errors=False
+            )
+        llama_parse_doc = parser.load_data(pdf_source_path)[0]
+        doc = llama_parse_doc.get_content()
+    return doc
+
+
+def load_single_doc_with_llama_parse(part_name: str, parsing_instr=""):
     if os.path.exists(f"./data_store/{part_name}.md"):
         with open(f"./data_store/{part_name}.md", 'r', encoding="utf-8") as f:
             doc = f.read()

@@ -27,7 +27,7 @@ class QdrantManager:
                 )
             )
 
-    def populate_vector_collection(self, doc_name: str, doc_specifier: str, docs_chunks: list):
+    def populate_vector_collection(self, doc_name: str, doc_specifier: str, doc_chunks: list):
         doc_instruction = f"Represent the {doc_specifier} Natural remedies paragraph for retrieval: "
         try:  # upsert has a limit of processing files with +5000 lines & may return an error
             self.qdrant_client.upsert(
@@ -42,7 +42,7 @@ class QdrantManager:
                     vector=self.model.encode(
                         sentences=(f'{doc_instruction} """ {chunk.page_content} """')
                     )
-                ) for chunk in docs_chunks]
+                ) for chunk in doc_chunks]
             )
         except ResponseHandlingException as e:
             logging.exception(e.source)
