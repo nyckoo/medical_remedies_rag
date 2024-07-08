@@ -13,9 +13,9 @@ class GroqManager:
                     "role": "system",
                     "content": "You are a great assistant that helps with sharing knowledge about medical plants. "
                                "Given the following sections in brackets from an encyclopedia, answer the question using "
-                               "only that information, outputted in markdown format. If you are unsure and answer is not "
+                               "only that information, outputted in .md format. If you are unsure and answer is not "
                                "explicitly written in given sections, say 'Sorry, I don't know how to help with that question.'"
-                               "Please answer by providing the whole content of any given section if it's suitable. "
+                               "Please answer by providing the whole content of sections that are suitable. "
                                "Context sections: "
                                f"{context}"
                 },

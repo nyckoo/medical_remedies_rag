@@ -29,7 +29,7 @@ class QdrantManager:
 
     def populate_vector_collection(self, doc_name: str, doc_specifier: str, doc_chunks: list):
         doc_instruction = f"Represent the {doc_specifier} Natural remedies paragraph for retrieval: "
-        try:  # upsert has a limit of processing files with +5000 lines & may return an error
+        try:  # upsert has a limit of processing chunks extracted from files with +5000 lines & may return an error
             self.qdrant_client.upsert(
                 collection_name=self.collection_name,
                 points=[models.PointStruct(
@@ -55,7 +55,7 @@ class QdrantManager:
             query_vector=np_vector,
             search_params=models.SearchParams(hnsw_ef=128, exact=True),
             score_threshold=0.8,
-            limit=10
+            limit=5
         )
         return "[" + "], [".join(map(str, [answer.payload for answer in results])) + "]"
 
