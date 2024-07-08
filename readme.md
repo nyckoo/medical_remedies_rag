@@ -1,10 +1,13 @@
-### Brief introduction
+## Brief introduction
 
 This project is of RAG type neural search service wrapped in Flask API & is about helping users to find natural medications data - history, cultivation, preparation, use etc.
 It's based on the **Encyclopedia Of Herbal Medicine** from following link:
 http://repo.upertis.ac.id/1889/1/Encyclopedia%20Of%20Herbal%20Medicine.pdf
-### Project phases
-#### 1. ETL
+
+## Project phases
+
+### 1. ETL
+
 To begin with, I divided the pdf to 5 parts based on chapters and their blocks text structure:
 1. History (p. 12-33)
 2. Cultures (p. 34-55)
@@ -49,20 +52,21 @@ def load_document_by_pymupdf(pdf_source_path: str, output_file_path: str) -> str
 				doc += page_text  
 	return doc
 ```
-#### 2. Embeddings & Vector DB
+### 2. Embeddings & Vector DB
+
 I decided to use [Instructor model](https://instructor-embedding.github.io/) to create embeddings, because with specific description given to each text chunk it adds another layer of category understanding to what's its purpose it the whole dataset. It clears a bit the clutter of many self-references inside the book.
 
 My implementation of chunks' specifications to Instructor model:
-> Embedding:
-> `f"Represent the {doc_specifier} Natural remedies paragraph for retrieval: "`
-> Doc specifiers to corresponding chapters:
-> 1.`General history of`
-> 2.`Cultural customs of` 
-> 3.`Properties of`
-> 4.`Features of`
-> 5.`Use of`
-> Query:
-> `"Represent the question for retrieving supporting documents: "`
+> Embedding:<br>
+> `f"Represent the {doc_specifier} Natural remedies paragraph for retrieval: "`<br>
+> Doc specifiers to corresponding chapters:<br>
+> 1.`General history of`<br>
+> 2.`Cultural customs of` <br>
+> 3.`Properties of`<br>
+> 4.`Features of`<br>
+> 5.`Use of`<br>
+> Query:<br>
+> `"Represent the question for retrieving supporting documents: "`<br>
 
 I chose [Qdrant](https://qdrant.tech/) as a vector database and populated the collection. To do so I had to divide large markdown files to be less than 5000 lines of text because of experiencing TimeoutError otherwise with bulk loading.
 
@@ -83,7 +87,8 @@ self.qdrant_client.upsert(
 	) for chunk in doc_chunks]  
 )
 ```
-#### 3. Creating API & Neural search query
+### 3. Creating API & Neural search query
+
 Lastly I made simple Flask API service as a query making wrapper to vector database for retrieval based on cosine similarity. The results from neural search are then interpreted as an additional query with Ollama 3 model to finally present relevant result to the question in a neat form.
 
 Neural search query: *(qdrant_manager.py)*
@@ -100,4 +105,5 @@ def make_query(self, query: str):
 	)  
 	return "[" + "], [".join(map(str, [answer.payload for answer in results])) + "]"
 ```
+
 And Ollama summarizer response generation is available in *groq_manager.py*
