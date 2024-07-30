@@ -57,7 +57,7 @@ class QdrantManager:
             score_threshold=0.8,
             limit=5
         )
-        return "[" + "], [".join(map(str, [answer.payload for answer in results])) + "]"
+        return [answer.payload for answer in results]
 
     def get_records_by_ids(self, recs_ids: list[str]):
         return self.qdrant_client.retrieve(self.collection_name, recs_ids, with_vectors=True)
