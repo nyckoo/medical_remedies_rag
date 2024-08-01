@@ -8,36 +8,41 @@ from qdrant_manager import QdrantManager
 
 class GraphClass(TypedDict):
     """
-    Represents the state of our graph.
+    Represents the state of the graph.
 
     Attributes:
-        question: question
-        generation: LLM generation
+        question: user question
+        collection_name: name of the vector database collection
+        generation: LLM generation decision
         documents: list of documents
+        query_correction_count: number of query transformation times
     """
 
     question: str
+    collection_name: str
     generation: str
-    web_search: str
     documents: List[str]
+    query_correction_count: int
 
 
-def retrieve(state, collection_name):
+def retrieve(state):
     """
     Retrieve documents
 
     Args:
         state (dict): The current graph state
-        collection_name (str): The name of vector DB collection to make similarity search from
 
     Returns:
         state (dict): New key added to state, documents, that contains retrieved documents
     """
     print("---RETRIEVE---")
     question = state["question"]
+    collection_name = state["collection_name"]
 
     # Retrieval
     documents = QdrantManager(collection_name).make_query(question)
+    # for idx, doc in enumerate(documents):
+    #     print(idx+1, doc)
     return {"documents": documents, "question": question}
 
 
@@ -77,20 +82,19 @@ def grade_documents(state):
 
     # Score each doc
     filtered_docs = []
-    web_search = "No"
-    for d in documents:
+    for doc in documents:
         score = retrieval_grader.invoke(
-            {"question": question, "document": d.page_content}
+            {"question": question, "document": doc}
         )
         grade = score.binary_score
         if grade == "yes":
             print("---GRADE: DOCUMENT RELEVANT---")
-            filtered_docs.append(d)
+            filtered_docs.append(doc)
         else:
             print("---GRADE: DOCUMENT NOT RELEVANT---")
-            web_search = "Yes"
-            continue
-    return {"documents": filtered_docs, "question": question, "web_search": web_search}
+    if len(filtered_docs) < 3:
+        tavily_search = "Yes"
+    return {"documents": filtered_docs, "question": question}
 
 
 def transform_query(state):
@@ -107,10 +111,13 @@ def transform_query(state):
     print("---TRANSFORM QUERY---")
     question = state["question"]
     documents = state["documents"]
+    query_correction_count = state["query_correction_count"] + 1
 
     # Re-write question
     better_question = question_rewriter.invoke({"question": question})
-    return {"documents": documents, "question": better_question}
+    print("---IMPROVED QUESTION---")
+    print(better_question)
+    return {"documents": documents, "question": better_question, "query_correction_count": query_correction_count}
 
 
 def web_search(state):
@@ -130,8 +137,7 @@ def web_search(state):
 
     # Web search
     docs = TavilySearchResults(k=3).invoke({"query": question})
-    web_results = "\n".join([d["content"] for d in docs])
-    web_results = Document(page_content=web_results)
+    web_results = "\n".join([doc["content"] for doc in docs])
     documents.append(web_results)
 
     return {"documents": documents, "question": question}
@@ -150,18 +156,19 @@ def decide_to_generate(state):
     """
 
     print("---ASSESS GRADED DOCUMENTS---")
-    state["question"]
-    web_search = state["web_search"]
-    state["documents"]
 
-    if web_search == "Yes":
-        # All documents have been filtered check_relevance
-        # We will re-generate a new query
-        print(
-            "---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, TRANSFORM QUERY---"
-        )
-        return "transform_query"
-    else:
+    relevant_documents = state["documents"]
+    query_correction_count = state["query_correction_count"]
+
+    if relevant_documents > 2 and query_correction_count < 3:
         # We have relevant documents, so generate answer
         print("---DECISION: GENERATE---")
         return "generate"
+    elif query_correction_count > 2:
+        # Too many attempts to transform query, so do a websearch
+        print("---DECISION: WEB SEARCH---")
+        return "web_search_node"
+    else:
+        # There are not enough documents after filtering, so regenerate a new query
+        print("---DECISION: NOT ENOUGH DOCUMENTS ARE RELEVANT TO QUESTION, TRANSFORM QUERY---")
+        return "transform_query"

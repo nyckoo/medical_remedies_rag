@@ -55,7 +55,7 @@ class QdrantManager:
             query_vector=np_vector,
             search_params=models.SearchParams(hnsw_ef=128, exact=True),
             score_threshold=0.8,
-            limit=5
+            limit=8
         )
         return [answer.payload for answer in results]
 

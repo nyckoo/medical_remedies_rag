@@ -67,7 +67,8 @@ llm_rewriter = ChatGroq(
 rewrite_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", """You a question re-writer that converts an input question to a better version that is optimized \n 
-            for web search. Look at the input and try to reason about the underlying semantic intent / meaning."""),
+            for web search. Look at the input and try to reason about the underlying semantic intent / meaning. \n
+            Please include nothing else than improved version of the question in the output."""),
         (
             "human",
             "Here is the initial question: \n\n {question} \n Formulate an improved question.",

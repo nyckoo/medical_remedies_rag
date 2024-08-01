@@ -1,7 +1,7 @@
 from flask import Flask, Response, request
 from flask_cors import CORS
 from qdrant_manager import QdrantManager
-from groq_manager import GroqManager
+from llm_chain_components import GroqManager
 
 app = Flask(__name__)
 app.debug = True
