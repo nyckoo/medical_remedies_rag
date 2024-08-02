@@ -1,8 +1,12 @@
 ## Brief introduction
 
-This project is of RAG type neural search service wrapped in Flask API & is about helping users to find natural medications data - history, cultivation, preparation, use etc.
+This project is of RAG type utilizing neural search wrapped in Flask API & is about helping users to find natural medications data - history, cultivation, preparation, use etc.
 It's based on the **Encyclopedia Of Herbal Medicine** from following link:
 http://repo.upertis.ac.id/1889/1/Encyclopedia%20Of%20Herbal%20Medicine.pdf
+
+The final version makes it an API-wrapped agent searching for relevant documents with utilities of rephrasing the question and supplying insufficient results with web search.
+Here's the model of an agent:
+![crag_natural_remedies_graph](https://github.com/user-attachments/assets/e056d221-1428-4117-b82b-2fe7357c6f25)
 
 ## Project phases
 
