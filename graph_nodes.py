@@ -1,8 +1,7 @@
 from typing import List
 from typing_extensions import TypedDict
-from langchain.schema import Document
 from langchain_community.tools.tavily_search import TavilySearchResults
-from llm_chain_components import rag_chain, retrieval_grader, question_rewriter
+from llm_chain_components import rag_chain, retrieval_grader, question_rewriter, answer_reviser
 from qdrant_manager import QdrantManager
 
 
@@ -13,9 +12,10 @@ class GraphClass(TypedDict):
     Attributes:
         question: user question
         collection_name: name of the vector database collection
-        generation: LLM generation decision
+        generation: LLM generation
         documents: list of documents
         query_correction_count: number of query transformation times
+        web_search_docs: results of a web search
     """
 
     question: str
@@ -23,11 +23,12 @@ class GraphClass(TypedDict):
     generation: str
     documents: List[str]
     query_correction_count: int
+    web_search_docs: List[str]
 
 
 def retrieve(state):
     """
-    Retrieve documents
+    Retrieve documents from knowledge base.
 
     Args:
         state (dict): The current graph state
@@ -86,14 +87,10 @@ def grade_documents(state):
         score = retrieval_grader.invoke(
             {"question": question, "document": doc}
         )
-        grade = score.binary_score
-        if grade == "yes":
+        if score.binary_score == "yes":
             print("---GRADE: DOCUMENT RELEVANT---")
-            filtered_docs.append(doc)
-        else:
-            print("---GRADE: DOCUMENT NOT RELEVANT---")
-    if len(filtered_docs) < 3:
-        tavily_search = "Yes"
+            filtered_docs.append({"content": doc["content"], "source": doc["ebook_chapter"]})
+
     return {"documents": filtered_docs, "question": question}
 
 
@@ -110,14 +107,13 @@ def transform_query(state):
 
     print("---TRANSFORM QUERY---")
     question = state["question"]
-    documents = state["documents"]
     query_correction_count = state["query_correction_count"] + 1
 
     # Re-write question
     better_question = question_rewriter.invoke({"question": question})
     print("---IMPROVED QUESTION---")
     print(better_question)
-    return {"documents": documents, "question": better_question, "query_correction_count": query_correction_count}
+    return {"question": better_question, "query_correction_count": query_correction_count}
 
 
 def web_search(state):
@@ -128,19 +124,42 @@ def web_search(state):
         state (dict): The current graph state
 
     Returns:
-        state (dict): Updates documents key with appended web results
+        state (dict): Updates web_search_answer key with web results
     """
 
     print("---WEB SEARCH---")
     question = state["question"]
-    documents = state["documents"]
 
     # Web search
     docs = TavilySearchResults(k=3).invoke({"query": question})
-    web_results = "\n".join([doc["content"] for doc in docs])
-    documents.append(web_results)
+    web_results = [{"content": doc["content"], "source": doc["url"]} for doc in docs]
 
-    return {"documents": documents, "question": question}
+    return {"web_search_docs": web_results, "question": question}
+
+
+def revision(state):
+    """
+    Revision of an answer of conducted web search.
+
+    Args:
+        state (dict): The current graph state
+
+    Returns:
+        state (dict): Updates documents key with appended web results
+    """
+
+    print("---ANSWER REVISION---")
+    question = state["question"]
+    documents = state["documents"]
+    web_results = state["web_search_docs"]
+
+    for web_doc in web_results:
+        filtered_content = answer_reviser.invoke({"question": question, "answer": web_doc["content"]})
+        documents.append({"content": filtered_content, "source": web_doc["source"]})
+        print("---FILTERED WEB CONTENT---")
+        print(filtered_content)
+
+    return {"documents": documents}
 
 
 # Edges
@@ -157,17 +176,17 @@ def decide_to_generate(state):
 
     print("---ASSESS GRADED DOCUMENTS---")
 
-    relevant_documents = state["documents"]
+    relevant_documents = len(state["documents"])
     query_correction_count = state["query_correction_count"]
-
-    if relevant_documents > 2 and query_correction_count < 3:
+    print(f"---RELEVANT DOCUMENTS: {relevant_documents}---")
+    if relevant_documents > 2 > query_correction_count:
         # We have relevant documents, so generate answer
         print("---DECISION: GENERATE---")
         return "generate"
-    elif query_correction_count > 2:
+    elif query_correction_count == 2:
         # Too many attempts to transform query, so do a websearch
         print("---DECISION: WEB SEARCH---")
-        return "web_search_node"
+        return "web_search"
     else:
         # There are not enough documents after filtering, so regenerate a new query
         print("---DECISION: NOT ENOUGH DOCUMENTS ARE RELEVANT TO QUESTION, TRANSFORM QUERY---")

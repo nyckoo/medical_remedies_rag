@@ -7,7 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 # RAG chain
 rag_prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a great assistant that helps with sharing knowledge about medical plants. "
+        ("system", "You are a helpful assistant that loves sharing knowledge about medical plants. "
                    "Given the following sections in brackets from an encyclopedia, answer the question using "
                    "only that information, outputted in markdown format. If you are unsure and answer is not "
                    "explicitly written in given sections, say 'Sorry, I don't know how to help with that question.'\n"
@@ -27,7 +27,6 @@ llm_rag = ChatGroq(
 
 rag_chain = rag_prompt | llm_rag | StrOutputParser()
 
-# answer_generation = rag_chain.invoke({"context": docs, "question": question})
 
 # Grader chain
 class DocsGrader(BaseModel):
@@ -77,4 +76,26 @@ rewrite_prompt = ChatPromptTemplate.from_messages(
 )
 
 question_rewriter = rewrite_prompt | llm_rewriter | StrOutputParser()
-# question_rewriter.invoke({"question": question})
+
+# Web search revision chain
+llm_reviser = ChatGroq(
+    model="llama3-8b-8192",
+    temperature=0.0,
+    max_retries=2,
+    api_key=os.environ.get("GROQ_KEY")
+)
+
+revision_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system",
+         """You're an answer reviser that filters relevant data from a piece of text based on given question. \n 
+            Look at the answer and try to select only those parts that correspond to the received question. \n
+            Please return nothing else than the found contents in given text as an output."""),
+        (
+            "human",
+            "Here is the question: \n\n {question} \n --- \n And the answer: \n\n {answer}",
+        ),
+    ]
+)
+
+answer_reviser = revision_prompt | llm_reviser | StrOutputParser()
