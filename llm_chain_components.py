@@ -8,7 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 rag_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", "You are a helpful assistant that loves sharing knowledge about medical plants. "
-                   "Given the following sections in brackets from an encyclopedia, answer the question using "
+                   "Given the following sections in brackets from provided data, answer the question using "
                    "only that information, outputted in markdown format. If you are unsure and answer is not "
                    "explicitly written in given sections, say 'Sorry, I don't know how to help with that question.'\n"
                    "Context sections: \n"

@@ -31,11 +31,3 @@ workflow.add_edge("generate", END)
 
 # Graph Initiation
 agent = workflow.compile()
-
-inputs = {
-    "question": "What are the properties of passionflower plant and what can I use it for as to healing aspects?",
-    "collection_name": "medical_herbs_rag_instructor_embeddings",
-    "query_correction_count": 0
-}
-
-result = agent.invoke(inputs)

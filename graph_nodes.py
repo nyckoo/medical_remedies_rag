@@ -41,9 +41,10 @@ def retrieve(state):
     collection_name = state["collection_name"]
 
     # Retrieval
-    documents = QdrantManager(collection_name).make_query(question)
-    # for idx, doc in enumerate(documents):
-    #     print(idx+1, doc)
+    qdrant_manager = QdrantManager(collection_name)
+    documents = qdrant_manager.make_query(question)
+    qdrant_manager.close()
+
     return {"documents": documents, "question": question}
 
 
@@ -55,7 +56,7 @@ def generate(state):
         state (dict): The current graph state
 
     Returns:
-        state (dict): New key added to state, generation, that contains LLM generation
+        state (dict): New key added to state that contains LLM generation
     """
     print("---GENERATE---")
     question = state["question"]
@@ -131,7 +132,7 @@ def web_search(state):
     question = state["question"]
 
     # Web search
-    docs = TavilySearchResults(k=3).invoke({"query": question})
+    docs = TavilySearchResults().invoke({"query": question})
     web_results = [{"content": doc["content"], "source": doc["url"]} for doc in docs]
 
     return {"web_search_docs": web_results, "question": question}
