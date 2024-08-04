@@ -9,7 +9,7 @@ The final version makes it an API-wrapped CRAG agent searching for relevant docu
 Here's the model of the agent:
 ![crag_natural_remedies_graph][agent_graph]
 
-[agent_graph]: https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Agent Graph Model"
+[agent_graph]: https://github.com/user-attachments/assets/4dcb5162-f899-4a68-8593-171191771610 "Agent Graph Model"
 ## Project phases
 
 ### 1. ETL
