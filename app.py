@@ -1,10 +1,10 @@
 import json
 from flask import Flask, Response, request
 from flask_cors import CORS
-from graph_workflow import agent
+from graph_workflow import workflow
+
 
 app = Flask(__name__)
-app.debug = True
 cors = CORS(
     app,
     origins="*",
@@ -23,8 +23,10 @@ def get_answer(query: str):
     inputs = {
         "question": query,
         "collection_name": collection_name,
-        "query_correction_count": 0
+        "query_correction_count": 0,
+        "last_iteration_state": {}
     }
+    agent = workflow.compile()
     results = agent.invoke(inputs)
 
     return Response(json.dumps({

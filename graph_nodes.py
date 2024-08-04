@@ -15,6 +15,7 @@ class GraphClass(TypedDict):
         generation: LLM generation
         documents: list of documents
         query_correction_count: number of query transformation times
+        last_iteration_state: state vars from nodes before overwriting with new values
         web_search_docs: results of a web search
     """
 
@@ -23,6 +24,7 @@ class GraphClass(TypedDict):
     generation: str
     documents: List[str]
     query_correction_count: int
+    last_iteration_state: dict
     web_search_docs: List[str]
 
 
@@ -81,6 +83,7 @@ def grade_documents(state):
     print("---CHECK DOCUMENT RELEVANCE TO QUESTION---")
     question = state["question"]
     documents = state["documents"]
+    last_iteration_state = state["last_iteration_state"]
 
     # Score each doc
     filtered_docs = []
@@ -92,7 +95,14 @@ def grade_documents(state):
             print("---GRADE: DOCUMENT RELEVANT---")
             filtered_docs.append({"content": doc["content"], "source": doc["ebook_chapter"]})
 
-    return {"documents": filtered_docs, "question": question}
+    if len(filtered_docs) < len(last_iteration_state.get("documents", [])):
+        question = last_iteration_state["question"]
+        documents = last_iteration_state["documents"]
+        return {"documents": documents, "question": question}
+
+    last_iteration_state["documents"] = filtered_docs
+    last_iteration_state["question"] = question
+    return {"documents": filtered_docs, "last_iteration_state": last_iteration_state}
 
 
 def transform_query(state):
@@ -111,10 +121,10 @@ def transform_query(state):
     query_correction_count = state["query_correction_count"] + 1
 
     # Re-write question
-    better_question = question_rewriter.invoke({"question": question})
+    new_question = question_rewriter.invoke({"question": question})
     print("---IMPROVED QUESTION---")
-    print(better_question)
-    return {"question": better_question, "query_correction_count": query_correction_count}
+    print(new_question)
+    return {"question": new_question, "query_correction_count": query_correction_count}
 
 
 def web_search(state):
@@ -180,7 +190,7 @@ def decide_to_generate(state):
     relevant_documents = len(state["documents"])
     query_correction_count = state["query_correction_count"]
     print(f"---RELEVANT DOCUMENTS: {relevant_documents}---")
-    if relevant_documents > 2 > query_correction_count:
+    if relevant_documents > 2 >= query_correction_count:
         # We have relevant documents, so generate answer
         print("---DECISION: GENERATE---")
         return "generate"

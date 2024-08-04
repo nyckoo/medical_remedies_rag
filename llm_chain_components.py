@@ -58,7 +58,7 @@ retrieval_grader = grade_prompt | llm_grader
 # Corrective chain
 llm_rewriter = ChatGroq(
     model="llama3-8b-8192",
-    temperature=0.0,
+    temperature=0.3,
     max_retries=2,
     api_key=os.environ.get("GROQ_KEY")
 )
@@ -90,7 +90,7 @@ revision_prompt = ChatPromptTemplate.from_messages(
         ("system",
          """You're an answer reviser that filters relevant data from a piece of text based on given question. \n 
             Look at the answer and try to select only those parts that correspond to the received question. \n
-            Please return nothing else than the found contents in given text as an output."""),
+            Please include nothing else than selected text in the output."""),
         (
             "human",
             "Here is the question: \n\n {question} \n --- \n And the answer: \n\n {answer}",

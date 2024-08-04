@@ -28,6 +28,3 @@ workflow.add_edge("transform_query", "retrieve")
 workflow.add_edge("web_search", "revision")
 workflow.add_edge("revision", "generate")
 workflow.add_edge("generate", END)
-
-# Graph Initiation
-agent = workflow.compile()
