@@ -116,7 +116,7 @@ def make_query(self, query: str):
 ### 4. CRAG agent development
 
 After time, I decided to turn this project into more advanced, CRAG agent using langchain with state management state. 
-Now the agent works by implemented graph behaviour using llm chains. The graph is [right at the top][#agent_graph].
+Now the agent works by implemented graph behaviour using llm chains. The graph is [right at the top][#brief-introduction].
 
 Workflow implementation: *(graph_workflow.py)*, <br>
 Nodes implementation: *(graph_nodes.py)*, <br>
