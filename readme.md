@@ -1,9 +1,15 @@
 ## Brief introduction
 
-This project is of RAG type neural search service wrapped in Flask API & is about helping users to find natural medications data - history, cultivation, preparation, use etc.
+This project is of CRAG type utilizing neural search wrapped in Flask API & is about helping users to find natural medications data <br> 
+like history, cultivation, preparation, use etc. <br>
 It's based on the **Encyclopedia Of Herbal Medicine** from following link:
 http://repo.upertis.ac.id/1889/1/Encyclopedia%20Of%20Herbal%20Medicine.pdf
 
+The final version makes it an API-wrapped CRAG agent searching for relevant documents with utilities of rephrasing the question and supplying insufficient results with web search. <br>
+Here's the model of the agent:
+![crag_natural_remedies_graph][agent_graph]
+
+[agent_graph]: https://github.com/user-attachments/assets/4dcb5162-f899-4a68-8593-171191771610 "Agent Graph Model"
 ## Project phases
 
 ### 1. ETL
@@ -87,9 +93,10 @@ self.qdrant_client.upsert(
 	) for chunk in doc_chunks]  
 )
 ```
-### 3. Creating API & Neural search query
+### 3. Creating Neural search query with Qdrant
 
-Lastly I made simple Flask API service as a query making wrapper to vector database for retrieval based on cosine similarity. The results from neural search are then interpreted as an additional query with Ollama 3 model to finally present relevant result to the question in a neat form.
+Then I made a simple query making method to vector database for retrieval based on cosine similarity. 
+Initially the results from neural search were interpreted as an additional query with Ollama 3 model to finally present relevant answer to the question in a neat form.
 
 Neural search query: *(qdrant_manager.py)*
 ```
@@ -106,4 +113,36 @@ def make_query(self, query: str):
 	return "[" + "], [".join(map(str, [answer.payload for answer in results])) + "]"
 ```
 
-And Ollama summarizer response generation is available in *groq_manager.py*
+### 4. CRAG agent development
+
+After time, I decided to turn this project into more advanced, CRAG agent using langchain with state management state. 
+Now the agent works by implemented graph behaviour using llm chains. The graph is [right at the top](#brief-introduction).
+
+Workflow implementation: *(graph_workflow.py)*, <br>
+Nodes implementation: *(graph_nodes.py)*, <br>
+LLM chains implementation: *(llm_chain_components.py)* <br>
+
+### 5. Flask API
+
+Lastly there's an API endpoint wrapper around all of agent's actions, for every request there's new agent object created from compiled graph workflow.
+The endpoint returns JSON object with 'generation' and 'documents' keys, that include LLM answer and all supported documents for a user query with content and sources.
+
+CRAG app endpoint: *(app.py)*
+```
+@app.route("/get_answer/<query>", methods=['GET'])
+def get_answer(query: str):
+    collection_name = request.headers.get("Collection-Name")
+    inputs = {
+        "question": query,
+        "collection_name": collection_name,
+        "query_correction_count": 0,
+        "last_iteration_state": {}
+    }
+    agent = workflow.compile()
+    results = agent.invoke(inputs)
+
+    return Response(json.dumps({
+        "generation": results["generation"],
+        "documents": results["documents"]
+    }), 200)
+```

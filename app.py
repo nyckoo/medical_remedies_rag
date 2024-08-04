@@ -1,10 +1,10 @@
+import json
 from flask import Flask, Response, request
 from flask_cors import CORS
-from qdrant_manager import QdrantManager
-from groq_manager import GroqManager
+from graph_workflow import workflow
+
 
 app = Flask(__name__)
-app.debug = True
 cors = CORS(
     app,
     origins="*",
@@ -20,9 +20,16 @@ def is_running():
 @app.route("/get_answer/<query>", methods=['GET'])
 def get_answer(query: str):
     collection_name = request.headers.get("Collection-Name")
-    qdrant_manager = QdrantManager(collection_name)
-    answer_sections = qdrant_manager.make_query(query)
-    qdrant_manager.close()
-    groq_manager = GroqManager()
-    groq_res = groq_manager.generate_response(context=answer_sections, question=query)
-    return Response(groq_res.choices[0].message.content, 200)
+    inputs = {
+        "question": query,
+        "collection_name": collection_name,
+        "query_correction_count": 0,
+        "last_iteration_state": {}
+    }
+    agent = workflow.compile()
+    results = agent.invoke(inputs)
+
+    return Response(json.dumps({
+        "generation": results["generation"],
+        "documents": results["documents"]
+    }), 200)
