@@ -8,7 +8,7 @@ This project is of CRAG type utilizing neural search packed into Flask API & is 
 <br>
 It's based on the **Encyclopedia Of Herbal Medicine** from following link:
 http://repo.upertis.ac.id/1889/1/Encyclopedia%20Of%20Herbal%20Medicine.pdf
-
+<br>
 The final version makes it an API-wrapped CRAG agent searching for relevant documents with utilities of rephrasing the question and supplying insufficient results with web search. <br>
 Here's the model of the agent:
 ![crag_natural_remedies_graph][agent_graph]
