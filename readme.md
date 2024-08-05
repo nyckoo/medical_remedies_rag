@@ -5,6 +5,7 @@ This project is of CRAG type utilizing neural search packed into Flask API & is 
 - cultivation,
 - preparation,
 - use etc.
+<br>
 It's based on the **Encyclopedia Of Herbal Medicine** from following link:
 http://repo.upertis.ac.id/1889/1/Encyclopedia%20Of%20Herbal%20Medicine.pdf
 
