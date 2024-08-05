@@ -1,7 +1,10 @@
 ## Brief introduction
 
-This project is of CRAG type utilizing neural search wrapped in Flask API & is about helping users to find natural medications data <br> 
-like history, cultivation, preparation, use etc. <br>
+This project is of CRAG type utilizing neural search packed into Flask API & is about helping users to find natural medications data like: <br>
+- history,
+- cultivation,
+- preparation,
+- use etc.
 It's based on the **Encyclopedia Of Herbal Medicine** from following link:
 http://repo.upertis.ac.id/1889/1/Encyclopedia%20Of%20Herbal%20Medicine.pdf
 
@@ -9,7 +12,7 @@ The final version makes it an API-wrapped CRAG agent searching for relevant docu
 Here's the model of the agent:
 ![crag_natural_remedies_graph][agent_graph]
 
-[agent_graph]: https://github.com/user-attachments/assets/4dcb5162-f899-4a68-8593-171191771610 "Agent Graph Model"
+[agent_graph]: https://github.com/user-attachments/assets/08aa0332-898f-4756-9ab0-0ab869f00a81 "Agent Graph Model"
 ## Project phases
 
 ### 1. ETL
@@ -124,7 +127,7 @@ LLM chains implementation: *(llm_chain_components.py)* <br>
 
 ### 5. Flask API
 
-Lastly there's an API endpoint wrapper around all of agent's actions, for every request there's new agent object created from compiled graph workflow.
+Lastly there's an API endpoint method around all of agent's work, so for every request there's new agent created from compiled graph workflow.
 The endpoint returns JSON object with 'generation' and 'documents' keys, that include LLM answer and all supported documents for a user query with content and sources.
 
 CRAG app endpoint: *(app.py)*
